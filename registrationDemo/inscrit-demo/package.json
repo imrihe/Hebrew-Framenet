@@ -1,0 +1,10 @@
+{
+    "name": "MyRegistrationApp"
+  , "version": "1.0.0-pre"
+  , "private": true
+  , "dependencies": {
+      "express": "2.5.0"
+    , "jade": ">= 0.0.1"
+    , "mongoose": ">=2.3.13"
+  }
+}
