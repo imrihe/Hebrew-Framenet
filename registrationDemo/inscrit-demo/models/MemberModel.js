@@ -17,6 +17,7 @@ var MemberSchema = new Schema({
     date      : Date
 });
 
+
 // Date setter
 MemberSchema.path('date').default(function(){
         return new Date();

@@ -1,0 +1,26 @@
+.container
+    .content
+        header.page-header
+            h1 #{title}
+                small.subtitle  Subtitle text
+        article.row
+            .span14
+                h3 number of framesList: #{framesList.length} 
+                - if (framesList.length)
+                    table.zebra-striped
+                        thead
+                            tr
+                                th Nom
+                                th Mail
+                                th Date
+                        tbody
+                        - framesList.forEach(function(frame){
+                            tr
+                                td= frame['id']
+                                td= frame['frame']['@name']
+                        - })
+                - else
+                    p No registered members yet.
+    
+    footer
+        p &copy; <a href="http://jtlebi.fr/">Jean-Tiare LE BIGOT</a> 2011 - GPL 2.0

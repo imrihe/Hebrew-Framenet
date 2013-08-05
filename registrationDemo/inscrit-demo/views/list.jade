@@ -1,12 +1,12 @@
 .container
     .content
         header.page-header
-            h1 Title text
-                small.subtitle Subtitle text
+            h1 #{title}
+                small.subtitle  Subtitle text
         article.row
             .span14
-                h2 Member list
-                - if (members.length)
+                h3 number of membersList: #{membersList.length} 
+                - if (membersList.length)
                     table.zebra-striped
                         thead
                             tr
@@ -14,7 +14,7 @@
                                 th Mail
                                 th Date
                         tbody
-                        - members.forEach(function(member){
+                        - membersList.forEach(function(member){
                             tr
                                 td= member['title']+" "+member['firstname']+" "+member['lastname']
                                 td= member['mail']

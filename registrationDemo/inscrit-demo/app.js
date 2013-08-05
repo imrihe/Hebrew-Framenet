@@ -11,9 +11,7 @@
 
 var express = require('express'),
     routes = require('./routes');
-
-var app = module.exports = express();
-
+var app = module.exports = express.createServer();
 // Configuration
 
 app.configure(function(){
@@ -38,7 +36,12 @@ app.configure('production', function(){
 app.get('/', routes.index);
 app.get('/list', routes.list);
 app.get('/csv', routes.csv);
+app.get('/framesList', routes.framesList);
+app.get('/try1', routes.try1);
+
+
 app.post('/', routes.index_post);
+
 
 // Open App socket
 app.listen(3003);
