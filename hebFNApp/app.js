@@ -7,77 +7,41 @@ var express = require('express')
 //, routes = require('./routes')
 //, user = require('./routes/user')
 	, path = require('path')
-	, mongoose = require('mongoose')
+	//, mongoose = require('mongoose')
 	,flash = require('connect-flash')
-	,auth = require('./contollers/auth')
 	,passport =require('passport')
-	,LocalStrategy =require('passport-local').Strategy;
-
-//load all controllers:
-var users = require('./contollers/users')
-	,control = require('./contollers/index')
+	,LocalStrategy =require('passport-local').Strategy
+	,auth = require('./contollers/auth')
 	,usersMong = require('./models/mongoDB/pull.js');
 
-//set passport authentication:
-//TODO
-var users = [
-             { id: 1, username: 'bob', password: 'secret', email: 'bob@example.com' }
-           , { id: 2, username: 'joe', password: 'birthday', email: 'joe@example.com' }
-         ];
+//load all controllers:
+//var users = require('./contollers/users')
+var control = require('./contollers/index');
 
-function findById(id, fn) {
-	  var idx = id - 1;
-	  if (users[idx]) {
-	    fn(null, users[idx]);
-	  } else {
-	    fn(new Error('User ' + id + ' does not exist'));
-	  }
-	}
 
-function findByUsername(username, fn) {
-	  for (var i = 0, len = users.length; i < len; i++) {
-	    var user = users[i];
-	    if (user.username === username) {
-	      return fn(null, user);
-	    }
-	  }
-	  return fn(null, null);
-	}
+
+
+
 //TODO passport.use(auth.strat);
 //auth.serializeUser;
-passport.serializeUser(function(user, done) {
+passport.serializeUser(auth.serializeUser);
+/*passport.serializeUser(function(user, done) {
 	console.log("serializeUser" + user);
-	done(null, user.id);
-});
+	done(null, user.username);
+});*/
 
 //auth.deserializeUser;
-
-passport.deserializeUser(function(id, done) {
-	console.log("deserielize user :" + id);
-  findById(id, function (err, user) {
+passport.deserializeUser(auth.deserializeUser);
+/*passport.deserializeUser(function(username, done) {
+	console.log("deserielize user :" + username);
+	findUser(username, function (err, user) {
     done(err, user);
   });
-});
+});*/
+
 
 //TODO
-passport.use(new LocalStrategy(
-		  function(username, password, done) {
-		    // asynchronous verification, for effect...
-		    process.nextTick(function () {
-		      
-		      // Find the user by username.  If there is no user with the given
-		      // username, or the password is not correct, set the user to `false` to
-		      // indicate failure and set a flash message.  Otherwise, return the
-		      // authenticated `user`.
-		      findByUsername(username, function(err, user) {
-		        if (err) { return done(err); }
-		        if (!user) { return done(null, false, { message: 'Unknown user ' + username }); }
-		        if (user.password != password) { return done(null, false, { message: 'Invalid password' }); }
-		        return done(null, user);
-		      })
-		    });
-		  }
-		));
+passport.use(new LocalStrategy(auth.localStrategyFunc));
 
 //start app:
 var app = express();
@@ -121,23 +85,14 @@ app.configure('production', function() {
 
 
 app.get('/', control.index);
-//the result of loadUser will be trasferred to 
-//app.get('/userTest', users.loadUser, control.showUser);
-app.get('/userTest2', usersMong.users);
-//app.get('/try1', user.listRecords);
-//app.get('/login', control.login);
-
 app.get('/login', function(req, res){
-  res.send('login', { user: req.user, message: req.flash('error') });
-});
-
-app.post('/login', 
-		  passport.authenticate('local', { failureRedirect: '/login', failureFlash: true }),
-		  function(req, res) {
-		    res.send("managed to authenticate!!!");
-		  });
-
-app.get('/account', ensureAuthenticated, function(req, res){
+	  //res.send('login', { user: req.user, message: req.flash('error') });
+		//res.render('login', { user: req.user, message: req.flash('error') });
+		console.log("req.user: ", req.user);
+		console.log("req.session.user: ", req.session.user);
+		res.render('login', { user: req.user, message: req.flash('error') });
+	});
+app.get('/account', auth.ensureAuthenticated, function(req, res){
 	  res.send('account: user: '+req.user);
 	});
 app.get('/logout', function(req, res){
@@ -147,37 +102,37 @@ app.get('/logout', function(req, res){
 
 
 
+//the result of loadUser will be trasferred to 
+//app.get('/userTest', users.loadUser, control.showUser);
+//app.get('/userTest2', usersMong.users);
+//app.get('/try1', user.listRecords);
+//app.get('/login', control.login);
 
-app.get('/auth', passport.authenticate('local'), function(req,res){
-	console.log("responding after auth: ", req.session.user);
-	res.send("authentication is OK");
-});
-app.get('/auth1', function(req,res,next){console.log("hi hi"); req.session.user="imrihe"; next();});
-app.get('/auth1', passport.authenticate('local'));
 
-app.get('/ses', function (req,res){
-	if (req.session.user =="imrihe") console.log("user logged!!");
-	else console.log("user is not logged!!");
-	req.login("imrihe", function(){console.log("wohhoooo"); res.send("user iis NOW logged to session-passport");});
-	req.session.user = "imrihe";
-	req.session.message= "hellow my man!";
-	res.session= req.session;
-	console.log("the session is: ", req.session);
-	res.send("done session \n"+ req.session.message);
+app.post('/login', 
+		  passport.authenticate('local', { failureRedirect: '/', failureFlash: true }),
+		  function(req, res) {
+			console.log("user is NOW LOGGED IN");
+			res.send("managed to authenticate!!!");
 });
 
+app.get('/auth', 
+		passport.authenticate('local'), 
+		function(req,res){
+				console.log("responding after auth: ", req.session.user);
+				res.send("authentication is OK");
+});
+
+app.get('/check', 
+		function(req,res){
+				console.log("DEBUG: checking...");
+				var userScehme = require('./models/mongoDB/schemes.js').userSchema;
+				var User = require('mongoose').model('User', userScehme);
+				User.findOne(function(err, user){console.log("this is the one!!", err, user);});
+				res.send("check is OK");
+});
 if (!module.parent) {
 	app.listen(process.env.PORT || 3000);
-	console.log("hebFNApp: Express server listening on port %d %s in %s mode", process.env.PORT || 3000,'localgost',  app.settings.env);
+	console.log("hebFNApp: Express server listening on port %d %s in %s mode", process.env.PORT || 3000, 'localhost',  app.settings.env);
 }else console.log("hebFNApp is running as sub-server");
 
-function ensureAuthenticated(req, res, next) {
-		console.log("checking autentication" + req.user);
-	  if (req.isAuthenticated()) { return next(); }
-	  res.redirect('/login')
-	}
-
-//OLD:
-/*http.createServer(app).listen(app.get('port'), function(){
-  console.log('Express server listening on port ' + app.get('port'));
-});*/
